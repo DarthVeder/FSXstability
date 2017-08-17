@@ -9,7 +9,7 @@ Copy the clone FSXstability to MATLAB toolbox directory. Rember to add the new t
 ### Usage
 From inside MATLAB run one of the following script:
 + testISA.m : generates ISA 1962 profiles for pressure, density, temperature and speed of sound up to 31 km. UK unit.
-+ snapshot_stability.m : find elevator trim angle for a given weight and flight condition.
++ stability_snapshot.m : find elevator trim angle for a given weight and flight condition.
 + CG_trim.m : find the elevator trim angle envelope for different weight and center of gravity positions.
 
 ### License
