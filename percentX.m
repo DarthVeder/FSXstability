@@ -1,8 +1,16 @@
 function val = percentX(x, acft)
-%percentX converts a position along the aircraft longitudinal axis, in percent.
-%   in: x ft 
-%       acft the aicraft data
-%   out: x_c adimensional
+%PERCENT Converts a position (ft) along the aircraft longitudinal axis wrt to the mac.
+%  
+% Sign convention:      <----------|-----*-----------|--------------o
+%                               xlemac   x        xlemac-mac
+%
+%        sign( val )   <0          |    >0     |   >0
+%
+%   Input:
+%       x : distance [ft ]
+%       acft : the aicraft data structure
+%   Output: 
+%       val = (xlemac-x)/100 [1]. If negative x is towards the fron of the aircraft.
 
 val = (acft.lemac - x)/acft.mac;
 

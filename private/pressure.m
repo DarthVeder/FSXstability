@@ -2,11 +2,16 @@ function P = pressure(h, unit)
 %PRESSURE ISA atmosphere pressure up to 32 km
 %   Model from Eshelby "Aircraft Performance: Theory and Practice" pag. 274
 %   App. C.
-%   in: h (ft or m)
-%       unit, either 'uk' or 'si'. Default 'si'
+%   Input: 
+%       h :  (ft or m). See unit
+%       unit : either 'uk' or 'si'. Default 'si'
+%   Output:
+%       P : Pa by default, psf if unit == 'uk'
+%
+%   See temperature for usage example.
 
 if nargin == 2 % 'uk' unit required as output and given as input
-    h = h * 0.3042; % m
+    h = h * 0.3042; % ft -> m
 end
 
 P = 0;
@@ -19,7 +24,7 @@ elseif h <= 32000
 end
 
 if nargin == 2 % 'uk' unit required as output and given as input
-    P = P * 0.021; % psf
+    P = P * 0.021; % Pa -> psf
 end
 
 end

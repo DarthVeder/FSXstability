@@ -2,11 +2,18 @@ function T = temperature(h, unit)
 %TEMPERATURE ISA atmosphere temperarure up to 32 km
 %   Model from Eshelby "Aircraft Performance: Theory and Practice" pag. 274
 %   App. C.
-%   in: h (ft or m)
-%       unit, either 'uk' or 'si'. By default 'si'.
-%   out: temperature K
+%   Input: 
+%       h : (ft or m). See unit.
+%       unit : either 'uk' or 'si'. By default 'si'.
+%   Output: 
+%       T : K
+%
+%   Example:
+%       temperature(2000) -> temperature in K at 2000 m
+%
+%       temperature(2000, 'uk') -> temperature in K at 2000 ft
 
-if nargin == 2
+if nargin == 2 % input in ft, must convert to m
     h = h * 0.3042; % m
 end
 

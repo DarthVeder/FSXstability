@@ -1,22 +1,24 @@
 function F = levelEquations(x, acft, config)
-%Steady flight level equations. 
+%LEVELEQUATIONS Steady state constant flight level equations. 
 %   Three equations system for steady level flight as described in
 %   Guillaume. 
-%   in: x(1) = alpha_deg [degrees]
-%       x(2) = Thrust [lb] or v (kt) (*)
-%       x(3) = detr [degrees]
-%       solveT  = true or false. Controls which variable in (*) is solved
-%   out: F = [CFx, CFz, CMtotal]
+%   Input: 
+%       x(1) = alpha_deg [degrees] at trim
+%       x(2) = Thrust [lb] or v (kt) at trim
+%       x(3) = detr [degrees] trim angle
+%       solveT  = true or false. Controls which variable is solved for. true -> solve for T(hrust); false -> solve for v(elocity) 
+%   Output:
+%       F = 3 dimension vector [CFx, CFz, CMtotal] with total forces. At trim must be small.
 
 % Flight data
 W     = acft.W; % lb
 h     = config.h; % ft
-teta  = config.teta_deg/180*pi; % pitch radiants
-rho_  = density(h,'uk');
-p     = pressure(h,'uk');
+teta  = config.teta_deg/180*pi; % climb pitch radiants
+rho_  = density(h,'uk'); % slug/ft^3
+p     = pressure(h,'uk'); % psf
 gamma = 1.4;
 
-% Arms
+% Arms in ft
 mac = acft.mac;
 dCGlonAC   = -acft.xACw       + acft.xCG(1) ;
 dCGvertVMO = -acft.zVMO       + acft.xCG(3);
@@ -24,8 +26,8 @@ dEngvertCG = -acft.xEngine(3) + acft.xCG(3); % vertical offset of the engine in 
 
 % Assigning solver variables
 alpha_deg = x(1);
-alpha = alpha_deg/180*pi;
-if config.solveT
+alpha = alpha_deg/180.0*pi;
+if config.solveT==true
     M = config.kv/asound(h,'uk');
     thrust = x(2);
 else
@@ -36,7 +38,7 @@ detr_deg = x(3);
 detr = detr_deg/180*pi;
 
 % Auxiliary flight variables
-q = 0.5*gamma*p*M^2;
+q = 0.5*gamma*p*M^2; % psf
 
 % Lift OK
 CLa = R404(alpha);
