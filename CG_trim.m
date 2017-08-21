@@ -3,51 +3,7 @@
 % It solves for either [alpha_deg, T lb, detr_deg] (true) or [alpha_deg, v kt, detr_deg] (false), using 
 % bool config.solveT variable set to true/false.
 % In the user directory there must be three files with the following structure:
-% 1) aicraft_data
-%       /* Geometry from aircraft.cfg */
-%       acft.wing_area : ft^2
-%       acft.wing_span :  ft
-%       acft.wing_root_chord : ft
-%       acft.wing_sweep :  deg
-%       acft.oswald_efficiency_factor :  1
-%       wing_pos_apex_lon :  ft
-%       elevator_trim_limit :  deg
-%       acft.xEngine : [x y z]  ft [y: can be positive or negative. No influence]
-%       acft.reference_datum_position : [x y z] ft
-%       acft.neng :  Number of engines
-%       acft.static_thrust :   lb per engine
-%       acft.cruise_lift_scalar 
-%       acft.parasite_drag_scalar 
-%       acft.induced_drag_scalar
-%       acft.pitch_stability
-%       yaw_stability
-%       acft.elevator_trim_effectiveness
-%       rudder_effectiveness
-%       acft.htail_incidence deg
-%       acft.empty_weight_CG_position : [x y z] ft
-%       acft.empty_weight :  lb
-%       acft.max_gross_weight :  lb
-%       nlg :  ft nose landing gear longitudinal position
-%       mlg :  ft main landing gear longitudinal position
-%       deltaf : [0 1 2 5 10 15 25 30 40] positions in degrees
-%       acft.lift_scalar
-%       acft.drag_scalar
-%       acft.pitch_scalar
-%       /* Aerodynamic data from .air file */
-%       acft.alpha0_deg = TBL404(CL=0)/pi*180; % rad -> degrees 
-%       acft.CD_0
-%       acft.CD_df
-%       acft.CD_dg
-%       acft.CL_h
-%       acft.CL_df
-%       acft.Cm0
-%       acft.Cm_h
-%       acft.Cm_dt /* thrust, not trim!! */
-%       acft.Cm_df
-%       acft.Cm_dg
-%       /* Arms. Visual Point */
-%       acft.xVMO : ft
-%       acft.zVMO : ft
+% 1) aicraft_data : it contains all the main geometric and engine(s) data and the coordinates of FSX VMO and wing AC
 % 2) aircraft_configuration
 %       config.gear_down : gear up (0) or down (1)
 %       config.f_deg :  deg flaps for current configuration
@@ -55,9 +11,9 @@
 %       config.h :  ft aircraft height
 %       config.kv :  kt aircraft speed KTAS
 %       config.solveT :  bool. True for finding thrust, false for findin v (tas) 
-% 3) station_load
-%       station_load :  [weight_i (lb),  xi (ft), yi (ft), zi (ft)  ;];
-%       fuel : [xi (ft),   yi (ft), zi(ft), fuel_weight (USG);];
+%       acft.xVMO : vector with VMO coordinates [xVMO, yVMO, zVMO]
+% 3) station_load : the aircraft section 'station_loads' to simulate different loading conditions.
+% Both files 1) and 3) can be generated ether by hand or using the preproc tool readFSXAircraft.py.
 % One needs also to insert in the same directory of the three files above, the following functions:
 %   R401
 %   R404
@@ -85,6 +41,10 @@ clc
 [file, file_path] = uigetfile('','Load aircraft data')
 run( strcat(file_path,file) )
 addpath(file_path)
+
+% station_load 
+[file, file_path] = uigetfile('','Station loads',file_path)
+run( strcat(file_path,file) )
 
 % Compute useful parameters given the geometry
 finalize_geometry;

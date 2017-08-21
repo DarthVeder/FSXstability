@@ -1,50 +1,6 @@
-% This m file allows a snapshot computation for detr given a specifi load.
+2% This m file allows a snapshot computation for detr given a specifi load.
 % In the user directory there must be three files with the following structure:
-% 1) aicraft_data
-%       /* Geometry from aircraft.cfg */
-%       acft.wing_area : ft^2
-%       acft.wing_span :  ft
-%       acft.wing_root_chord : ft
-%       acft.wing_sweep :  deg
-%       acft.oswald_efficiency_factor :  1
-%       wing_pos_apex_lon :  ft
-%       elevator_trim_limit :  deg
-%       acft.xEngine : [x y z]  ft [y: can be positive or negative. No influence]
-%       acft.reference_datum_position : [x y z] ft
-%       acft.neng :  Number of engines
-%       acft.static_thrust :   lb per engine
-%       acft.cruise_lift_scalar 
-%       acft.parasite_drag_scalar 
-%       acft.induced_drag_scalar
-%       acft.pitch_stability
-%       yaw_stability
-%       acft.elevator_trim_effectiveness
-%       rudder_effectiveness
-%       acft.htail_incidence deg
-%       acft.empty_weight_CG_position : [x y z] ft
-%       acft.empty_weight :  lb
-%       acft.max_gross_weight :  lb
-%       nlg :  ft nose landing gear longitudinal position
-%       mlg :  ft main landing gear longitudinal position
-%       deltaf : [0 1 2 5 10 15 25 30 40] positions in degrees
-%       acft.lift_scalar
-%       acft.drag_scalar
-%       acft.pitch_scalar
-%       /* Aerodynamic data from .air file */
-%       acft.alpha0_deg = TBL404(CL=0)/pi*180; % rad -> degrees 
-%       acft.CD_0
-%       acft.CD_df
-%       acft.CD_dg
-%       acft.CL_h
-%       acft.CL_df
-%       acft.Cm0
-%       acft.Cm_h
-%       acft.Cm_dt /* thrust, not trim!! */
-%       acft.Cm_df
-%       acft.Cm_dg
-%       /* Arms. Visual Point */
-%       acft.xVMO : ft
-%       acft.zVMO : ft
+% 1) aicraft_data : it contains all the main geometric and engine(s) data and the coordinates of FSX VMO and wing AC
 % 2) aircraft_configuration
 %       config.gear_down : gear up (0) or down (1)
 %       config.f_deg :  deg flaps for current configuration
@@ -52,10 +8,10 @@
 %       config.h :  ft aircraft height
 %       config.kv :  kt aircraft speed KTAS
 %       config.solveT :  bool. True for finding thrust, false for findin v (tas) 
-% 3) station_load
-%       station_load :  [weight_i (lb),  xi (ft), yi (ft), zi (ft)  ;];
-%       fuel : [xi (ft),   yi (ft), zi(ft), fuel_weight (USG);];
-% One needs also to insert in the same directory of the three files abov, the folling functions:
+%       acft.xVMO : vector with VMO coordinates [xVMO, yVMO, zVMO]
+% 3) station_load : the aircraft section 'station_loads' to simulate different loading conditions.
+% Both files 1) and 3) can be generated ether by hand or using the preproc tool readFSXAircraft.py.
+% One needs also to insert in the same directory of the three files above, the following functions:
 %   R401
 %   R404
 %   R423
@@ -65,6 +21,13 @@
 %   R536 /* if missing set to 1 */
 %   R537 /* if missing set to 1 */
 %   R1525
+%
+%   Output:
+%       a : coefficients for detr[deg] = f(W,xcg/c) approximation. The
+%           approximate function f(W,xcg/c) is given as:
+%           detr_deg = a(1)*(W/Wmax)^3 + a(2)*(W/Wmax)^2 + a(3)*(W/Wmax) + a(4) + a(5)*xcg_c/100;
+%       detrp : matrix nrow by ncol, where nrow is the number of xcg/c
+%               points and ncol is the number of weight points used.
 
 clear
 clc
@@ -73,27 +36,41 @@ clc
 [file, file_path] = uigetfile('','Load aircraft data')
 run( strcat(file_path,file) )
 addpath(file_path)
-
-% Aircraft required configuration
-% Loading aircraft configuration
-[file, file_path] = uigetfile('','Load aircraft configuration',file_path)
-run( strcat(file_path,file) )
-disp('Current cofiguration:')
-disp(config)
-
 % Computing useful parameters from geometry data
 finalize_geometry;
 
-% station_load 
-[file, file_path] = uigetfile('','Station loads',file_path)
-run( strcat(file_path,file) )
-[acft.xCG, acft.W] = computeCG(acft.empty_weight, acft.empty_weight_CG_position, station_load, fuel); % return in [ft, lb]
+% station_load
+prompt = 'Do you want to specify xCG(ft) and W (lb)? y/n [n]: ';
+str = input(prompt,'s');
+if isempty(str)
+    str = 'n';
+end
+if str == 'y' || str == 'Y'
+    data = inputdlg({'xCG coords x,y,z separated by space', 'Weight (lb)'},'Configuration')
+    acft.xCG = str2num(cell2mat(data(1)));
+    acft.W = str2num(cell2mat(data(2)));
+else
+    [file, file_path] = uigetfile('','Station loads',file_path)
+    run( strcat(file_path,file) )    
+end
+
+
+if str == 'n' || str == 'N'
+    [acft.xCG, acft.W] = computeCG(acft.empty_weight, acft.empty_weight_CG_position, acft.station_load, acft.fuel); % return in [ft, lb]
+end
+
 disp(sprintf('Current CG position (x,y,z) (ft):'))
 disp(acft.xCG)
 disp( 'Current weight (lb): ' )
 disp( sprintf('%8.0f',(acft.W)) )
 disp(sprintf('ACTUAL WEIGHT XCG/MAC: %4.2f%%',percentX(acft.xCG(1), acft)*100));
 disp( sprintf('XCG gear limits: from %4.2f%% to %4.2f%%',acft.xcg_fwd, acft.xcg_aft) )
+
+% Loading aircraft configuration
+[file, file_path] = uigetfile('','Load aircraft configuration',file_path)
+run( strcat(file_path,file) )
+disp('Current cofiguration:')
+disp(config)
 
 % Solving routine:
 if config.solveT

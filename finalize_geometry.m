@@ -11,13 +11,16 @@ acft.mac = 2./3.*acft.wing_root_chord * (1+lam+lam^2)/(1+lam); % ft
 disp(sprintf('MAC : %4.2f ft',acft.mac))
 y_r = acft.wing_span/6. * (1+2*lam)/(1+lam); % ft
 x_r = y_r *tan(acft.wing_sweep/180.*pi); %ft
-acft.lemac = wing_pos_apex_lon - x_r; 
+acft.lemac = acft.wing_pos_apex_lon - x_r; 
 xew_c = percentX(acft.empty_weight_CG_position(1), acft);
 % Estimated wing aerodynamic center
-acft.xACw = acft.reference_datum_position(1) -acft.dCMlindalp/acft.dCLlindalp*acft.mac;
-%acft.xACw_v2 =0.25 + acft.AR/6.0*(1+2.0*lambda)/(1+lambda)*tan(acft.wing_sweep/180*pi)*acft.mac; /* alternative formulation */
-acft.zACw = 0;
+%acft.xACw = acft.lemac-acft.mac/4.0;
+xACw = acft.reference_datum_position(1) - acft.dCMlindalp/acft.dCLlindalp*acft.mac;
+%xACw =0.25 + acft.AR/6.0*(1+2.0*lambda)/(1+lambda)*tan(acft.wing_sweep/180*pi)*acft.mac; /* alternative formulation */
+acft.xACw = [xACw, 0, 0]
 % Finding xcg forward and aft position limits based on gear configuration
+nlg = acft.point_0(1);
+mlg = acft.point_1(1);
 B = (nlg - mlg);
 Ma = 0.08 * B; % From Rymer
 Mf = 0.18 * B; % From Rymer
