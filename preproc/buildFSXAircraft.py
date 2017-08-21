@@ -1,52 +1,26 @@
 """
-Reads FSX aircraft.cfg and an exported air file with AAM.
+Reads FSX aircraft.cfg, an exported txt air file (*) and all the required txt tables (*).
+(*) exported with AAM as a single txt file and as txt file for each table
 
-Use config.ini for setting the directories for input aircraft.cfg and
-aircraft air file in [paths] block.
+Use config.ini [paths] section for setting the directories to aircraft.cfg and
+aircraft air files. TBL 536 and TBL537 are required, if not present on the air file
+an appropriate m-file must be generated or copied from other directories.
 
 Author : Marco Messina
 Copyright : 2017-
-Version : 1.1
+Version : 2.0
+License: GPL v3
 """
 
 from sys import exit
 import configparser
-import logging
-
-# FSX data
-fuel_tank = ('Left', 'Right', 'Center', 'External', 'Tip')
-
-# set up logging to file - see previous section for more details
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s %(name)-12s %(funcName)-12s %(levelname)-8s %(message)s',
-                    datefmt='%d/%m %H:%M:%S',
-                    filename='.\\myapp.log',
-                    filemode='w')
-# define a Handler which writes INFO messages or higher to the sys.stderr
-console = logging.StreamHandler()
-console.setLevel(logging.INFO)
-# set a format which is simpler for console use
-formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
-# tell the handler to use this format
-console.setFormatter(formatter)
-# add the handler to the root logger
-logging.getLogger('').addHandler(console)
-
-# Now, we can log to the root logger, or any other logger. First the root...
-logging.info('Starting the program')
-
-# Now, define a couple of other loggers which might represent areas in your
-# application:
-
-logger1 = logging.getLogger('myapp.readers')
+from log import *
+from fsxdata import *
+from buildTables import *
 
 # Constants
 comments = ('//',';','#')
-# FSX Engine types
-engine_type = ('piston','jet','none','helo-tubine','rocket','turboprop')
-# Data to exctract from air file
-data_to_extract = ('CD0','Cd_df','CDg','CL_de','CL_dh','CL_df',\
-                   'Cmo','Cm_de','Cm_h','Cm_dT','Cm_dt','Cm_df','Cmg','Cn_dr')
+# List's last position 
 end = -1
 
 def read_config_file():
@@ -272,7 +246,6 @@ if __name__ == '__main__':
                 fout.write('acft.'+str(w)+'='+ lst[w]+';\n')
             elif w.find('weight') != -1:
                 fout.write('acft.'+str(w)+'='+ lst[w]+';\n')
-                
 
     #####################################
     ##      GeneralEngineData          ##
@@ -348,3 +321,39 @@ if __name__ == '__main__':
         fout.write('];\n')
 
         logger1.info('Found '+str(ntanks)+' fuel tanks')        
+
+    #####################################
+    ##      generating m-files         ##
+    #####################################
+    import glob
+    files = glob.glob('*TAB*.txt')
+    logger1.info('Found: '+str(files))
+    # Check to see if TBL536 and TBL537 are there. If not, are generated
+    is_there_tbl0536 = False
+    is_there_tbl0537 = False
+    msg = 'Found '
+    for f in files:
+        if f.find('0536') != -1:
+            is_there_tbl0536 = True            
+        if f.find('0537') != -1:
+            is_there_tbl0537 = True            
+    if is_there_tbl0536 == False:
+        msg = msg + 'NO table 0536 '
+    else:
+        msg = msg + ' table 0536 '        
+    if is_there_tbl0537 == False:
+        msg = msg + 'NO table 0537 '
+    else:
+        msg = msg + ' table 0537 '
+
+    logger1.info(msg)
+
+    for f_name in files:
+        build_matlab_air_tables(f_name)
+
+    # Building TBL536 and TBL537 if not present in the root directory
+    if is_there_tbl0536 == False:
+        build_special_air_table('536')
+    if is_there_tbl0537 == False:
+        build_special_air_table('537')
+        

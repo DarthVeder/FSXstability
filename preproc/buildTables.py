@@ -1,22 +1,34 @@
-import glob
+from log import *
+from fsxdata import *
 
-# FSX Mach numbers
-mach_number = ('0','0.2','0.4','0.6','0.8',\
-                '1.0','1.2','1.4','1.6','1.8',\
-                '2.0','2.2','2.4','2.6','2.8',\
-                '3.0','3.2')
+def build_special_air_table(tab_name):
+    """
+    Build special air table missing in the air file, but required in Y. Guilluame formulation.
+    By default all values of the special table are set to '1'.
+
+    Input:
+        tab_name : numeric name of the table. 3 or 4 digits (ex 1525 or 536). No leading zeros on the name.
+    """
+    fout_name = 'R' + tab_name + '.m' # R536.m with method R536(angle_deg)
+    with open(fout_name,'w') as fout:
+        fout.write('function val = R'+tab_name+'(alpha_deg)\n')
+        fout.write('% in: angle of attach, deg\n% out: Table '+tab_name+' value\n')
+        fout.write('TBL'+tab_name+'=[\n')
+        fout.write('-360 1.0;\n')
+        fout.write('360 1.0;];\n')
+        fout.write('val = interp1(TBL'+tab_name+'(:,1),TBL'+tab_name+'(:,2),alpha_deg);\n\nend\n')
 
 def build_matlab_air_tables(f_name):
     """
     Build air table in matlab format. The code converts all file with filename *TAB*.txt.
 
     Input:
-        f_name : input table found in data directory.
+        f_name : input table file name found in data directory.
     """
     with open(f_name,'r') as fin:
-        print('Opening file '+f_name+'\n')
+        logger1.debug('Opening file '+f_name)
         points = fin.readline().split()[1]
-        print('Found '+points+' points\n')
+        logger1.debug('Found '+points+' points')
 
         # Reading table
         table = []
@@ -31,7 +43,7 @@ def build_matlab_air_tables(f_name):
             tab_name = tab_name[1:]
 
     fout_name = 'R'+tab_name+'.m'
-    print('Building '+fout_name+'\n')
+    logger1.debug('Building '+fout_name)
 
     with open(fout_name,'w') as fout:
         fout.write('function val = R'+tab_name+'(M)\n')
@@ -46,6 +58,7 @@ def build_matlab_air_tables(f_name):
         fout.write('val = interp1(TBL'+tab_name+'(:,1),TBL'+tab_name+'(:,2),M);\n\nend\n')
 
 if __name__ == '__main__':
+    import glob
     files = glob.glob('*TAB*.txt')
     print('Found: '+str(files)+'\n')
 
