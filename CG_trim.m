@@ -1,9 +1,10 @@
-% This m file finds elevator trim - xcg relationship for diffrent weight and configuration.
+% This m file finds elevator trim - xcg relationship for different weight and configurations.
 % It produces also a best fit curve to use in ad-hoc xml gauges.
 % It solves for either [alpha_deg, T lb, detr_deg] (true) or [alpha_deg, v kt, detr_deg] (false), using 
 % bool config.solveT variable set to true/false.
 % In the user directory there must be three files with the following structure:
-% 1) aicraft_data : it contains all the main geometric and engine(s) data and the coordinates of FSX VMO and wing AC
+% 1) aicraft data : it contains all the main geometric and engine(s) data
+% obtained by preproc tool
 % 2) aircraft_configuration
 %       config.gear_down : gear up (0) or down (1)
 %       config.f_deg :  deg flaps for current configuration
@@ -13,24 +14,13 @@
 %       config.solveT :  bool. True for finding thrust, false for findin v (tas) 
 %       acft.xVMO : vector with VMO coordinates [xVMO, yVMO, zVMO]
 % 3) station_load : the aircraft section 'station_loads' to simulate different loading conditions.
-% Both files 1) and 3) can be generated ether by hand or using the preproc tool readFSXAircraft.py.
-% One needs also to insert in the same directory of the three files above, the following functions:
-%   R401
-%   R404
-%   R423
-%   R430
-%   R433
-%   R473
-%   R536 /* if missing set to 1 */
-%   R537 /* if missing set to 1 */
-%   R1525
-%
+%                   Generated with preproc tool.
 %   Output:
 %       a : coefficients for detr[deg] = f(W,xcg/c) approximation. The
 %           approximate function f(W,xcg/c) is given as:
 %           detr_deg = a(1)*(W/Wmax)^3 + a(2)*(W/Wmax)^2 + a(3)*(W/Wmax) + a(4) + a(5)*xcg_c/100;
 %       detrp : matrix nrow by ncol, where nrow is the number of xcg/c
-%               points and ncol is the number of weight points used.
+%               points (20) and ncol is the number of weight points used (from empty weight to mtom every 5000 lb).
 
 clear
 clc
@@ -124,12 +114,24 @@ xlabel('xcg/c')
 ylabel('\delta_{etr} (deg)')
 hold off;
 
+% Check de trim is between maximun and minimum value. If it is outside, NaN
+% is used instead of the value.
+
+
 % Interpolation based on:
 % detr_deg = a(1)*(W/Wmax)^3 + a(2)*(W/Wmax)^2 + a(3)*(W/Wmax) + a(4) + a(5)*xcg_c/100;
 a = M\detr';
 disp('Approximate detr-xcg_c function:')
 disp(sprintf('detr(xcg)[deg] = %4.2f *(W/Wmax)^3 + %4.2f *(W/Wmax)^2 + %4.2f *(W/Wmax) + %4.2f + %4.2f *xcg_c/100',a(1),a(2),a(3),a(4),a(5)))
 
+n = size(detrp);
+for i=1:n(1)
+    for j=1:n(2)
+        if abs(detrp(i,j)) > acft.elevator_trim_limit
+            detrp(i,j) = NaN
+        end
+    end
+end
 
 % To check if approximation is correct set the following data:
 %xcg_ct = 45
