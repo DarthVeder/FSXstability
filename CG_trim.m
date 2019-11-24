@@ -47,7 +47,9 @@ disp(config)
 
 % Setting up mass vectors and xcg_c
 Wmax = acft.max_gross_weight;
-W = [acft.empty_weight:5000:acft.max_gross_weight];
+nWsteps = 3;
+dW = (acft.max_gross_weight - acft.empty_weight) / (nWsteps-1);
+W = [acft.empty_weight:dW:acft.max_gross_weight];
 xcg_c = linspace(acft.xcg_fwd,acft.xcg_aft,20); % xcg/c range (%)
 %%%%%%%%%%%%%%%%%%%%%%%%
 % END INPUT DATA
@@ -117,7 +119,6 @@ hold off;
 % Check de trim is between maximun and minimum value. If it is outside, NaN
 % is used instead of the value.
 
-
 % Interpolation based on:
 % detr_deg = a(1)*(W/Wmax)^3 + a(2)*(W/Wmax)^2 + a(3)*(W/Wmax) + a(4) + a(5)*xcg_c/100;
 a = M\detr';
@@ -125,13 +126,38 @@ disp('Approximate detr-xcg_c function:')
 disp(sprintf('detr(xcg)[deg] = %4.2f *(W/Wmax)^3 + %4.2f *(W/Wmax)^2 + %4.2f *(W/Wmax) + %4.2f + %4.2f *xcg_c/100',a(1),a(2),a(3),a(4),a(5)))
 
 n = size(detrp);
-for i=1:n(1)
-    for j=1:n(2)
+% xcg_c_limit(i,k) store for weight W(j) the xcg_c min in xcg_c_limit(i,k=1) and the
+% xcg_c max in xcg_c_limit(i,k=2)
+
+% Initializing for min and max search
+for j=1:n(2)
+    xcg_c_limit(j,1) = 1e3;
+    xcg_c_limit(j,2) = -1e3;
+end
+for i=1:n(1) % loop on all xcg_c positions
+    for j=1:n(2) % loop on all weights
         if abs(detrp(i,j)) > acft.elevator_trim_limit
-            detrp(i,j) = NaN
+            detrp(i,j) = NaN;
+        else
+            xcg_c_limit(j,1) = min(xcg_c(i), xcg_c_limit(j,1));
+            xcg_c_limit(j,2) = max(xcg_c(i), xcg_c_limit(j,2));
         end
     end
 end
+
+    % Plot Weight versus xcg_c
+figure;
+xlabel('W/1000 (lb)')
+ylabel('xcg/c (%)')
+plot(xcg_c_limit(:,1), W./1000, 'o-', xcg_c_limit(:,2), W./1000, '^-')
+legend('min', 'max')
+
+format shortg
+disp('CG (%) range')
+disp('W(lb) xcg/c (%) min max')
+disp([W',xcg_c_limit])
+format
+
 
 % To check if approximation is correct set the following data:
 %xcg_ct = 45

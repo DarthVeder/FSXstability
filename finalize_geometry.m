@@ -14,8 +14,9 @@ x_r = y_r *tan(acft.wing_sweep/180.*pi); %ft
 acft.lemac = acft.wing_pos_apex_lon - x_r; 
 xew_c = percentX(acft.empty_weight_CG_position(1), acft);
 % Estimated wing aerodynamic center
-%acft.xACw = acft.lemac-acft.mac/4.0;
-xACw = acft.reference_datum_position(1) - acft.dCMlindalp/acft.dCLlindalp*acft.mac;
+%xACw = acft.lemac-acft.mac/4.0; % correct from AFSD B738 test flights
+xACw = acft.lemac-acft.mac*0.48; % !! TEST !!
+%xACw = acft.reference_datum_position(1) - acft.dCMlindalp/acft.dCLlindalp*acft.mac;
 %xACw =0.25 + acft.AR/6.0*(1+2.0*lambda)/(1+lambda)*tan(acft.wing_sweep/180*pi)*acft.mac; /* alternative formulation */
 acft.xACw = [xACw, 0, 0]
 % Finding xcg forward and aft position limits based on gear configuration

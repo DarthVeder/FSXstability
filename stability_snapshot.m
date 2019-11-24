@@ -1,4 +1,4 @@
-2% This m file allows a snapshot computation for detr given a specifi load.
+% This m file allows a snapshot computation for detr given a specific load.
 % In the user directory there must be three files with the following structure:
 % 1) aicraft_data : it contains all the main geometric and engine(s) data and the coordinates of FSX VMO and wing AC
 % 2) aircraft_configuration
@@ -75,7 +75,7 @@ disp(config)
 % Solving routine:
 if config.solveT
     x0 = [0, acft.static_thrust*0.5, 0]; % alpha_deg, T lb, detr_deg
-else
+else    
     x0 = [0, 180, 0]; % alpha_deg, v kt, detr_deg
 end
 fun = @(x)levelEquations(x, acft, config);

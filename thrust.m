@@ -1,5 +1,5 @@
 function [net_thrust, gross_thrust, ram_drag] = thrust(M, h_ft, acft, config)
-%JETTHRUST Computes FSX TOTAL jet thrust at a specific Mach number and heigh (ft). NO VECTORS IN INPUT.
+%thrust() Computes FSX TOTAL jet thrust at a specific Mach number and heigh (ft). NO VECTORS IN INPUT.
 % 	   Always assume CN1 = 98%
 %   The equations used are for standard FSX jet thrust computation:
 %	gross_thrust = acft.static_thrust*R1506(M,h)*delta_2

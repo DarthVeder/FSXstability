@@ -6,27 +6,29 @@ function F = levelEquations(x, acft, config)
 %       x(1) = alpha_deg [degrees] at trim
 %       x(2) = Thrust [lb] or v (kt) at trim
 %       x(3) = detr [degrees] trim angle
-%       solveT  = true or false. Controls which variable is solved for. true -> solve for T(hrust); false -> solve for v(elocity) 
+%       solveT  = true or false. Controls which variable is solved for. true -> solve for T(hrust); 
+%                                                                       false -> solve for v(elocity) 
 %   Output:
 %       F = 3 dimension vector [CFx, CFz, CMtotal] with total forces. At trim must be small.
 
 % Flight data
 W     = acft.W; % lb
 h     = config.h; % ft
-teta  = config.teta_deg/180*pi; % climb pitch radiants
+teta_rad  = config.teta_deg/180*pi; % climb pitch radiants
 rho_  = density(h,'uk'); % slug/ft^3
 p     = pressure(h,'uk'); % psf
 gamma = 1.4;
 
 % Arms in ft
 mac = acft.mac;
-dCGlonAC   = -acft.xACw(1)     + acft.xCG(1) ;
-dCGvertVMO = -acft.xVMO(3)     + acft.xCG(3);
+dCGlonAC   = acft.xCG(1)-acft.xACw(1);
+dCGvertVMO = acft.xCG(3)-acft.xVMO(3);
+
 dEngvertCG = -acft.Engine_0(3) + acft.xCG(3); % vertical offset of the engine in ft from the current CG
 
 % Assigning solver variables
 alpha_deg = x(1);
-alpha = alpha_deg/180.0*pi;
+alpha_rad = alpha_deg/180.0*pi;
 if config.solveT==true
     M = config.kv/asound(h,'uk');
     thrust = x(2);
@@ -35,13 +37,13 @@ else
     thrust = acft.static_thrust;
 end
 detr_deg = x(3);
-detr = detr_deg/180*pi;
+detr_rad = detr_deg/180*pi;
 
 % Auxiliary flight variables
 q = 0.5*gamma*p*M^2; % psf
 
 % Lift OK
-CLa = R404(alpha);
+CLa = R404(alpha_rad);
 CLdf = acft.CL_df*(config.f_deg/180*pi)*acft.lift_scalar;
 CLawf = (CLa+CLdf)*R401(M)*acft.cruise_lift_scalar;
 CLih = acft.CL_dh*(acft.htail_incidence/180*pi);
@@ -59,28 +61,28 @@ CDtotal = CDwf + CDgear;
 
 % Total forces in x and z directions:
 % ( Corrected equations )
-CFx = - CDtotal - W*sin(teta)/(q*acft.wing_area) ...
+CFx = - CDtotal - W*sin(teta_rad)/(q*acft.wing_area) ...
     + acft.neng*thrust/(q*acft.wing_area);
-CFz = -CLtotal + W*cos(teta)/(q*acft.wing_area);
+CFz = -CLtotal + W*cos(teta_rad)/(q*acft.wing_area);
 
 % Pitch equation
 CMa0  = acft.Cmo + R433(M);
-CMa   = R473(alpha);
-CMdf  = acft.Cm_df*(config.f_deg/180*pi)*acft.pitch_scalar;
+CMa   = R473(alpha_rad);
+CMdf  = acft.Cm_df * (config.f_deg/180*pi) * acft.pitch_scalar;
 CMawf =  CMa + CMdf ...
-      + dCGlonAC/mac * ( CLawf*cos(alpha) + CDwf*sin(alpha) ) ...
-      + dCGvertVMO/mac * ( -CLawf*sin(alpha) + CDwf*cos(alpha) ); 
-CMih  = ( acft.Cm_h + R423(M) )*(acft.htail_incidence/180*pi)*R537(alpha_deg) ...
-      + dCGlonAC/mac * ( CLih*cos(alpha) ) ...
-      + dCGvertVMO/mac * ( -CLih*sin(alpha) );
+      + dCGlonAC/mac * ( CLawf*cos(alpha_rad) + CDwf*sin(alpha_rad) ) ...
+      + dCGvertVMO/mac * ( -CLawf*sin(alpha_rad) + CDwf*cos(alpha_rad) ); 
+CMih  = ( acft.Cm_h + R423(M) ) * (acft.htail_incidence/180*pi) * R537(alpha_rad) ...
+      + dCGlonAC/mac * ( CLih*cos(alpha_rad) ) ...
+      + dCGvertVMO/mac * ( -CLih*sin(alpha_rad) );
 
-CMdetr = acft.Cm_dt* detr *R536(alpha_deg)*R1525(q)*acft.elevator_trim_effectiveness;
+CMdetr = acft.Cm_dt * detr_rad * R536(alpha_rad) * R1525(q) * acft.elevator_trim_effectiveness;
 CMgear = acft.Cmg * config.gear_down ...
-       + dCGlonAC/mac * CDgear*sin(alpha) ...
-       + dCGvertVMO/mac * CDgear*cos(alpha);
+       + dCGlonAC/mac * CDgear * sin(alpha_rad) ...
+       + dCGvertVMO/mac * CDgear * cos(alpha_rad);
 CMaero = CMa0 + CMawf + CMih + CMdetr + CMgear;
 
-CMpropulsion = ( acft.neng*thrust/(q*acft.wing_area) ) * (dEngvertCG/mac);
+CMpropulsion = ( acft.neng * thrust / (q*acft.wing_area) ) * (dEngvertCG/mac);
 CMtotal = -CMaero + CMpropulsion;
 
 F(1) = CFx;
