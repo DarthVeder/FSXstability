@@ -5,7 +5,7 @@ center of gravity positions. The code works for FSX aircraft and it is for MATLA
 Users are required to extract data from aircraft.cfg and .air file (using AAM). See the [wiki](https://github.com/DarthVeder/FSXstability/wiki/FSX-Stability) pages for more details.
  
 ### Installation
-Copy the clone FSXstability to any directory. Rember to add the new direxctory to MATLAB's path.
+Copy the clone FSXstability to any directory and run fsxstability.py.
 
 ### Usage
 From inside MATLAB run one of the following script:
