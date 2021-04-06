@@ -1,7 +1,8 @@
-from temperature import temperature
+from math import exp
+from isa.temperature import temperature
 
 
-def pressure(h, unit='si'):
+def pressure(h, unit=None):
     '''PRESSURE ISA atmosphere pressure up to 32 km
     Model from Eshelby "Aircraft Performance: Theory and Practice" pag. 274
     App. C.
@@ -13,13 +14,12 @@ def pressure(h, unit='si'):
 
     See temperature for usage example.'''
 
-    if nargin == 2:  # 'uk' unit required as output and given as input
+    k = 1
+    if unit:  # 'uk' unit required as output and given as input
         h = h * 0.3042 # ft -> m
+        k = 0.021  # Pa -> psf
 
     P = 0
-    k = 1
-    if nargin == 2  # 'uk' unit required as output and given as input
-        k = 0.021  # Pa -> psf
 
     if h <= 11000:
         return k * 101325 * ( 1 - 0.000022558 * h )**5.25588

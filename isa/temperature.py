@@ -1,4 +1,4 @@
-def temperature(h, unit='si'):
+def temperature(h, unit=None):
     '''TEMPERATURE ISA atmosphere temperarure up to 32 km
     Model from Eshelby "Aircraft Performance: Theory and Practice" pag. 274
     App. C.
@@ -11,8 +11,8 @@ def temperature(h, unit='si'):
     Example:
         temperature(2000) -> temperature in K at 2000 m
         temperature(2000, 'uk') -> temperature in K at 2000 ft'''
-    if nargin == 2:  # input in ft, must convert to m
-        h = h * 0.3042; % m
+    if unit:  # input in ft, must convert to m
+        h = h * 0.3042  # m
 
 
     L0 = -0.0065 # K/m
